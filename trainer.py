@@ -35,6 +35,7 @@ def train_model(model, criterion, dataloaders, optimizer, metrics, bpath, num_ep
             else:
                 model.eval()   # Set model to evaluate mode
 
+            print("Current in:", phase)
             # Iterate over data.
             for sample in tqdm(iter(dataloaders[phase])):
                 inputs = sample['image'].to(device)
@@ -44,10 +45,14 @@ def train_model(model, criterion, dataloaders, optimizer, metrics, bpath, num_ep
 
                 # track history if only in train
                 with torch.set_grad_enabled(phase == 'Train'):
+                    # print("Model inpit shape", inputs.shape)
                     outputs = model(inputs)
+                    # print("Model output shape", outputs['out'].shape)
+                    # print("massks shape",masks.shape)
                     loss = criterion(outputs['out'], masks)
                     y_pred = outputs['out'].data.cpu().numpy().ravel()
                     y_true = masks.data.cpu().numpy().ravel()
+                    # print(masks.shape)
                     for name, metric in metrics.items():
                         if name == 'f1_score':
                             # Use a classification threshold of 0.1
