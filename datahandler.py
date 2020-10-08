@@ -10,7 +10,7 @@ from torchvision import transforms, utils
 class SegDataset(Dataset):
     """Segmentation Dataset"""
 
-    def __init__(self, root_dir, imageFolder, maskFolder, transform=None, seed=None, fraction=None, subset=None, imagecolormode='rgb', maskcolormode='grayscale'):
+    def __init__(self, root_dir, imageFolder, maskFolder, transform=None, seed=None, fraction=None, subset=None, imagecolormode='rgb', maskcolormode='af'):
         """
         Args:
             root_dir (string): Directory with all the images and should have the following structure.
@@ -30,9 +30,9 @@ class SegDataset(Dataset):
             imagecolormode: 'rgb' or 'grayscale'
             maskcolormode: 'rgb' or 'grayscale'
         """
-        self.color_dict = {'rgb': 1, 'grayscale': 0}
+        self.color_dict = {'af': 2, 'rgb': 1, 'grayscale': 0}
         assert(imagecolormode in ['rgb', 'grayscale'])
-        assert(maskcolormode in ['rgb', 'grayscale'])
+        assert(maskcolormode in ['af', 'rgb', 'grayscale'])
 
         self.imagecolorflag = self.color_dict[imagecolormode]
         self.maskcolorflag = self.color_dict[maskcolormode]
@@ -50,6 +50,7 @@ class SegDataset(Dataset):
                 sorted(glob.glob(os.path.join(self.root_dir, imageFolder, '*'))))
             self.mask_list = np.array(
                 sorted(glob.glob(os.path.join(self.root_dir, maskFolder, '*'))))
+            # print(self.mask_list)
             if seed:
                 np.random.seed(seed)
                 indices = np.arange(len(self.image_list))
@@ -78,10 +79,14 @@ class SegDataset(Dataset):
         else:
             image = cv2.imread(img_name, self.imagecolorflag)
         msk_name = self.mask_names[idx]
-        if self.maskcolorflag:
-            mask = cv2.imread(msk_name, self.maskcolorflag).transpose(2, 0, 1)
-        else:
+        if self.maskcolorflag == 1:
+            mask = cv2.imread(msk_name, self.maskcolorflag).transpose(2, 0, 1) 
+        elif self.maskcolorflag == 0:
             mask = cv2.imread(msk_name, self.maskcolorflag)
+        else:
+            mask = np.load(msk_name).transpose((2, 0, 1))
+            # print(mask.shape)
+
         sample = {'image': image, 'mask': mask}
 
         if self.transform:
